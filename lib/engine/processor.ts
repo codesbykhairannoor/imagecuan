@@ -64,8 +64,14 @@ export class ProcessorEngine {
     const batch = images.slice(0, batchSize);
     console.log(`[Processor] Processing batch of ${batch.length} images (out of ${images.length} total)`);
     
+    // Helper function to sleep
+    const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+    
     for (const image of batch) {
       await this.processImage(image);
+      // Wait 2 seconds before processing the next image to prevent rate limiting
+      console.log(`[Processor] Waiting 2 seconds before next image...`);
+      await sleep(2000);
     }
   }
 }

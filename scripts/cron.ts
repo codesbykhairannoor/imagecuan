@@ -1,4 +1,5 @@
 import { processorEngine } from "../lib/engine/processor";
+import { imageGeneratorEngine } from "../lib/engine/image-generator";
 import { CONFIG } from "../lib/config";
 import dotenv from "dotenv";
 
@@ -35,7 +36,14 @@ for (const target of CONFIG.targets) {
 async function runCron() {
   console.log("=== Starting Imagecuan Cron Job ===");
   try {
+    // 1. Auto-Generate 5 new images
+    console.log("--- PHASE 1: GENERATION ---");
+    await imageGeneratorEngine.generateBatch(5);
+
+    // 2. Process and Upload
+    console.log("--- PHASE 2: PROCESSING & UPLOAD ---");
     await processorEngine.scanAndProcess();
+    
     console.log("=== Cron Job Finished Successfully ===");
   } catch (err) {
     console.error("Cron Job Failed:", err);

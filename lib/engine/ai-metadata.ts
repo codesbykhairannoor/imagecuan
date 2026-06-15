@@ -1,64 +1,83 @@
 /**
- * IMAGECUAN - Gemini AI Metadata Engine
+ * IMAGECUAN - HuggingFace AI Metadata Engine
+ * Uses token rotation to bypass rate limits.
  */
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { CONFIG } from "../config";
 
 export class AIMetadataEngine {
-  private genAI: GoogleGenerativeAI | null = null;
+  private tokens: string[] = [];
+  private tokenIndex: number = 0;
 
-  constructor() {
-    if (CONFIG.ai.geminiApiKey) {
-      this.genAI = new GoogleGenerativeAI(CONFIG.ai.geminiApiKey);
-    }
+  private getNextToken(): string | null {
+    const potentialTokens = [
+      process.env.HF_TOKEN_2,
+      process.env.HF_TOKEN_3,
+      process.env.HF_TOKEN_4,
+      process.env.HF_TOKEN
+    ];
+    
+    const tokens = potentialTokens.filter(t => t && t.trim() !== "") as string[];
+    
+    if (tokens.length === 0) return null;
+    const token = tokens[this.tokenIndex % tokens.length];
+    this.tokenIndex++;
+    return token;
   }
 
   /**
-   * Use Gemini 1.5 Flash to analyze the image and generate stock photography metadata.
+   * Use HuggingFace BLIP to analyze the image and generate stock photography metadata.
    */
   async generateMetadata(imageBuffer: Buffer, fileName: string) {
-    if (!this.genAI) {
-      console.warn("[AI] Gemini API Key missing. Using fallback metadata.");
+    const token = this.getNextToken();
+    
+    if (!token || CONFIG.ai.dummyMode) {
+      if (!CONFIG.ai.dummyMode) console.warn("[AI] No HuggingFace tokens available. Using fallback metadata.");
       return this.getFallbackMetadata(fileName);
     }
 
     try {
-      const model = this.genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      console.log(`[AI] Querying HuggingFace Vision API (Token rotating...)`);
       
-      const prompt = `
-        Analyze this image for stock photography purposes. 
-        Provide the following in JSON format:
+      const response = await fetch(
+        "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large",
         {
-          "title": "A concise, descriptive title (max 70 chars)",
-          "description": "A detailed description including main subjects and mood",
-          "keywords": ["at", "least", "20", "relevant", "keywords", "comma", "separated"]
-        }
-        Focus on high-value SEO keywords for buyers.
-      `;
-
-      const result = await model.generateContent([
-        prompt,
-        {
-          inlineData: {
-            data: imageBuffer.toString("base64"),
-            mimeType: "image/jpeg", // Assuming JPEG for now
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/octet-stream",
           },
-        },
-      ]);
+          method: "POST",
+          body: imageBuffer,
+        }
+      );
 
-      const response = await result.response;
-      const text = response.text();
+      if (!response.ok) {
+        throw new Error(`HF API Error: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
       
-      // Extract JSON from potential markdown blocks
-      const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+      if (Array.isArray(result) && result.length > 0 && result[0].generated_text) {
+        const description = result[0].generated_text;
+        
+        // Capitalize title
+        const title = description.charAt(0).toUpperCase() + description.slice(1);
+        
+        // Generate pseudo-keywords from the description
+        const words = description.replace(/[^a-zA-Z0-9 ]/g, "").split(" ");
+        const baseKeywords = ["stock", "photo", "image", "asset", "high quality", "background"];
+        const keywords = [...new Set([...words, ...baseKeywords])].filter(w => w.length > 2);
+        
+        return {
+          title: title.slice(0, 70), // Max 70 chars for titles
+          description: description,
+          keywords: keywords.slice(0, 30), // 30 keywords
+        };
       }
       
-      throw new Error("Failed to parse AI response as JSON");
+      throw new Error("Invalid response format from HF");
     } catch (error) {
-      console.error("[AI] Gemini Error:", error);
+      console.error("[AI] HuggingFace Error:", error);
       return this.getFallbackMetadata(fileName);
     }
   }
