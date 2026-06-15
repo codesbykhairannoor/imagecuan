@@ -61,6 +61,9 @@ jobs:
           # We just need to commit the deletions.
           git add -u storage/raw/
           
+          # Also commit the history database
+          git add public/history.json
+          
           # If there are changes (files deleted), commit and push
           if git diff --cached --quiet; then
             echo "No files were processed or deleted."

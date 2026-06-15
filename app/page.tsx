@@ -4,9 +4,22 @@ import React, { useState, useEffect } from "react";
 
 export default function Dashboard() {
   const [isMounted, setIsMounted] = useState(false);
+  const [historyData, setHistoryData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setIsMounted(true);
+    // Fetch live database from GitHub Pages / Raw content or local public folder
+    fetch("https://raw.githubusercontent.com/codesbykhairannoor/imagecuan/main/public/history.json?t=" + Date.now())
+      .then(res => res.json())
+      .then(data => {
+        setHistoryData(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error("Failed to fetch history DB", err);
+        setLoading(false);
+      });
   }, []);
 
   if (!isMounted) return null;
@@ -106,6 +119,52 @@ export default function Dashboard() {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Live History Database */}
+      <div className="glass-card" style={{ marginTop: "40px", padding: "30px", background: "rgba(0,0,0,0.3)", borderRadius: "20px", border: "1px solid rgba(255,255,255,0.1)" }}>
+        <h3 style={{ marginBottom: "20px", fontSize: "1.5rem", color: "#fff", display: "flex", alignItems: "center", gap: "10px" }}>
+          <span>📊</span> Live Activity Log
+        </h3>
+        
+        {loading ? (
+          <p style={{ color: "#888" }}>Menghubungkan ke GitHub Database...</p>
+        ) : historyData.length === 0 ? (
+          <p style={{ color: "#888" }}>Belum ada log aktivitas. Robot akan mulai mencatat saat jadwal berikutnya berjalan.</p>
+        ) : (
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+              <thead>
+                <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)", color: "#aaa" }}>
+                  <th style={{ padding: "12px", fontWeight: "normal" }}>Waktu Eksekusi</th>
+                  <th style={{ padding: "12px", fontWeight: "normal" }}>Status Upload</th>
+                  <th style={{ padding: "12px", fontWeight: "normal" }}>Gambar Terbuat</th>
+                  <th style={{ padding: "12px", fontWeight: "normal" }}>Subjek (Aset AI)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {historyData.map((log, i) => (
+                  <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", transition: "background 0.3s" }}>
+                    <td style={{ padding: "16px 12px", color: "#ddd" }}>
+                      {new Date(log.date).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })}
+                    </td>
+                    <td style={{ padding: "16px 12px" }}>
+                      <span style={{ padding: "4px 8px", background: "rgba(0,255,136,0.1)", color: "#00ff88", borderRadius: "6px", fontSize: "0.8rem" }}>
+                        ✅ {log.generatedCount} Sukses
+                      </span>
+                    </td>
+                    <td style={{ padding: "16px 12px", color: "#00f2ff", fontWeight: "bold" }}>
+                      +{log.generatedCount} Assets
+                    </td>
+                    <td style={{ padding: "16px 12px", color: "#888", fontSize: "0.9rem" }}>
+                      {log.files.map((f: string) => f.replace("generated_", "").split("_")[0]).join(", ")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Footer Info */}

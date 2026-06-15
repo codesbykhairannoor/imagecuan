@@ -38,12 +38,40 @@ async function runCron() {
   try {
     // 1. Auto-Generate 5 new images
     console.log("--- PHASE 1: GENERATION ---");
-    await imageGeneratorEngine.generateBatch(5);
+    const generatedFiles = await imageGeneratorEngine.generateBatch(5);
 
     // 2. Process and Upload
     console.log("--- PHASE 2: PROCESSING & UPLOAD ---");
     await processorEngine.scanAndProcess();
     
+    // 3. Log to History Database
+    console.log("--- PHASE 3: DATABASE LOGGING ---");
+    const fs = require("fs-extra");
+    const path = require("path");
+    
+    const historyPath = path.join(process.cwd(), "public", "history.json");
+    let history = [];
+    if (fs.existsSync(historyPath)) {
+      try {
+        history = JSON.parse(fs.readFileSync(historyPath, "utf8"));
+      } catch (e) {
+        history = [];
+      }
+    }
+    
+    const logEntry = {
+      date: new Date().toISOString(),
+      generatedCount: generatedFiles.length,
+      files: generatedFiles
+    };
+    
+    // Keep only last 50 entries to prevent the file from growing infinitely
+    history.unshift(logEntry);
+    if (history.length > 50) history = history.slice(0, 50);
+    
+    fs.writeFileSync(historyPath, JSON.stringify(history, null, 2));
+    console.log(`[Database] Logged execution with ${generatedFiles.length} generated files.`);
+
     console.log("=== Cron Job Finished Successfully ===");
   } catch (err) {
     console.error("Cron Job Failed:", err);
