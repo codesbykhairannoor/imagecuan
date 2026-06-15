@@ -47,6 +47,7 @@ export class AIMetadataEngine {
             "Content-Type": "application/octet-stream",
           },
           method: "POST",
+          // @ts-ignore
           body: imageBuffer,
         }
       );

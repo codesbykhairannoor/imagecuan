@@ -26,7 +26,7 @@ export class MetadataEngine {
         Description: metadata.description,
         Keywords: metadata.keywords,
         ObjectName: metadata.title,
-        CaptionAbstract: metadata.description,
+        "Caption-Abstract": metadata.description,
       });
       console.log(`[MetadataEngine] Success: ${path.basename(filePath)}`);
     } catch (error) {
