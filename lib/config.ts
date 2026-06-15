@@ -50,8 +50,8 @@ export const CONFIG = {
       host: "ftp.123rf.com",
       port: 21,
       protocol: "ftp",
-      username: process.env["123RF_USERNAME"] || "",
-      password: process.env["123RF_PASSWORD"] || "",
+      username: process.env.RF123_USERNAME || "",
+      password: process.env.RF123_PASSWORD || "",
       remoteDir: "/",
     }
   ],

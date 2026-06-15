@@ -25,8 +25,8 @@ for (const target of CONFIG.targets) {
     target.username = process.env.POND5_USERNAME || "";
     target.password = process.env.POND5_PASSWORD || "";
   } else if (target.id === "123rf") {
-    target.username = process.env["123RF_USERNAME"] || "";
-    target.password = process.env["123RF_PASSWORD"] || "";
+    target.username = process.env.RF123_USERNAME || "";
+    target.password = process.env.RF123_PASSWORD || "";
   } else if (target.id === "freepik") {
     target.username = process.env.FREEPIK_USERNAME || "";
     target.password = process.env.FREEPIK_PASSWORD || "";

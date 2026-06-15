@@ -45,8 +45,8 @@ jobs:
           DREAMSTIME_PASSWORD: ${{ secrets.DREAMSTIME_PASSWORD }}
           POND5_USERNAME: ${{ secrets.POND5_USERNAME }}
           POND5_PASSWORD: ${{ secrets.POND5_PASSWORD }}
-          123RF_USERNAME: ${{ secrets.123RF_USERNAME }}
-          123RF_PASSWORD: ${{ secrets.123RF_PASSWORD }}
+          RF123_USERNAME: ${{ secrets.RF123_USERNAME }}
+          RF123_PASSWORD: ${{ secrets.RF123_PASSWORD }}
           FREEPIK_USERNAME: ${{ secrets.FREEPIK_USERNAME }}
           FREEPIK_PASSWORD: ${{ secrets.FREEPIK_PASSWORD }}
         run: npx tsx scripts/cron.ts
