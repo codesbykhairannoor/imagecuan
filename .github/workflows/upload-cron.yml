@@ -1,0 +1,67 @@
+name: Imagecuan Drip-feed Uploader
+
+on:
+  schedule:
+    # Run 3 times a day at 02:00, 10:00, and 18:00 UTC (around 09:00, 17:00, 01:00 WIB)
+    - cron: '0 2,10,18 * * *'
+  # Allow manual trigger from the GitHub Actions tab
+  workflow_dispatch:
+
+jobs:
+  process-and-upload:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Needed to commit file deletions back to the repo
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Ensure storage directories exist
+        run: |
+          mkdir -p storage/raw
+          mkdir -p storage/processed
+
+      - name: Run Imagecuan Processor
+        env:
+          # Pass secrets from GitHub to the environment
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ADOBE_USERNAME: ${{ secrets.ADOBE_USERNAME }}
+          ADOBE_PASSWORD: ${{ secrets.ADOBE_PASSWORD }}
+          SHUTTERSTOCK_USERNAME: ${{ secrets.SHUTTERSTOCK_USERNAME }}
+          SHUTTERSTOCK_PASSWORD: ${{ secrets.SHUTTERSTOCK_PASSWORD }}
+          DREAMSTIME_USERNAME: ${{ secrets.DREAMSTIME_USERNAME }}
+          DREAMSTIME_PASSWORD: ${{ secrets.DREAMSTIME_PASSWORD }}
+          POND5_USERNAME: ${{ secrets.POND5_USERNAME }}
+          POND5_PASSWORD: ${{ secrets.POND5_PASSWORD }}
+          123RF_USERNAME: ${{ secrets.123RF_USERNAME }}
+          123RF_PASSWORD: ${{ secrets.123RF_PASSWORD }}
+          FREEPIK_USERNAME: ${{ secrets.FREEPIK_USERNAME }}
+          FREEPIK_PASSWORD: ${{ secrets.FREEPIK_PASSWORD }}
+        run: npx tsx scripts/cron.ts
+
+      - name: Clean up processed files and commit changes
+        run: |
+          git config --global user.name "Imagecuan Auto Bot"
+          git config --global user.email "bot@imagecuan.local"
+          
+          # Delete all files that were successfully moved to storage/processed from tracking
+          # Actually, the processor `fs.move` deletes them from `storage/raw` on disk.
+          # We just need to commit the deletions.
+          git add -u storage/raw/
+          
+          # If there are changes (files deleted), commit and push
+          if git diff --cached --quiet; then
+            echo "No files were processed or deleted."
+          else
+            git commit -m "Auto-processed and uploaded a batch of images"
+            git push
+          fi

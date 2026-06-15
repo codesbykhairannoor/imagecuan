@@ -1,0 +1,46 @@
+/**
+ * IMAGECUAN - Metadata Engine
+ * Handles AI-powered tagging and IPTC metadata injection.
+ */
+
+import { exiftool } from "exiftool-vendored";
+import path from "path";
+import { aiMetadataEngine } from "./ai-metadata";
+
+export interface ImageMetadata {
+  title: string;
+  description: string;
+  keywords: string[];
+}
+
+export class MetadataEngine {
+  /**
+   * Inject IPTC metadata into an image file.
+   */
+  async injectMetadata(filePath: string, metadata: ImageMetadata): Promise<void> {
+    const absolutePath = path.resolve(filePath);
+    
+    try {
+      await exiftool.write(absolutePath, {
+        Title: metadata.title,
+        Description: metadata.description,
+        Keywords: metadata.keywords,
+        ObjectName: metadata.title,
+        CaptionAbstract: metadata.description,
+      });
+      console.log(`[MetadataEngine] Success: ${path.basename(filePath)}`);
+    } catch (error) {
+      console.error(`[MetadataEngine] Error:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Analyze image using AI (Gemini) to generate metadata.
+   */
+  async generateMetadata(imageBuffer: Buffer, fileName: string): Promise<ImageMetadata> {
+    return await aiMetadataEngine.generateMetadata(imageBuffer, fileName);
+  }
+}
+
+export const metadataEngine = new MetadataEngine();

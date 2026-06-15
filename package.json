@@ -1,0 +1,35 @@
+{
+  "name": "imagecuan",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@types/fs-extra": "^11.0.4",
+    "@types/ssh2": "^1.15.5",
+    "basic-ftp": "^6.0.1",
+    "dotenv": "^17.4.2",
+    "exiftool-vendored": "^35.21.0",
+    "framer-motion": "^12.40.0",
+    "fs-extra": "^11.3.5",
+    "lucide-react": "^1.17.0",
+    "next": "^16.2.9",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "sharp": "^0.35.1",
+    "ssh2": "^1.17.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.9",
+    "typescript": "^5.9.3"
+  }
+}
