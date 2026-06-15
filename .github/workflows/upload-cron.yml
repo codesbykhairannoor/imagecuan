@@ -33,6 +33,9 @@ jobs:
       - name: Run Imagecuan Processor
         env:
           # Pass secrets from GitHub to the environment
+          HF_TOKEN_2: ${{ secrets.HF_TOKEN_2 }}
+          HF_TOKEN_3: ${{ secrets.HF_TOKEN_3 }}
+          HF_TOKEN_4: ${{ secrets.HF_TOKEN_4 }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ADOBE_USERNAME: ${{ secrets.ADOBE_USERNAME }}
           ADOBE_PASSWORD: ${{ secrets.ADOBE_PASSWORD }}
