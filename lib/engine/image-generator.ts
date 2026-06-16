@@ -54,20 +54,34 @@ export class ImageGeneratorEngine {
     console.log(`[Generator] Generating image for prompt: "${prompt}"`);
 
     try {
-      const response = await fetch(
-        "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          method: "POST",
-          body: JSON.stringify({ inputs: prompt }),
-        }
-      );
+      let response;
+      let retries = 3;
+      while (retries > 0) {
+        response = await fetch(
+          "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            method: "POST",
+            body: JSON.stringify({ inputs: prompt }),
+          }
+        );
 
-      if (!response.ok) {
-        throw new Error(`HF Generation Error: ${response.status} ${response.statusText}`);
+        if (response.status === 503) {
+          const json = await response.json().catch(() => ({}));
+          const waitTime = json.estimated_time ? Math.ceil(json.estimated_time) + 2 : 20;
+          console.log(`[Generator] Model is loading. Waiting ${waitTime} seconds before retry...`);
+          await new Promise(r => setTimeout(r, waitTime * 1000));
+          retries--;
+          continue;
+        }
+        break;
+      }
+
+      if (!response || !response.ok) {
+        throw new Error(`HF Generation Error: ${response?.status} ${response?.statusText}`);
       }
 
       // The response is an image blob

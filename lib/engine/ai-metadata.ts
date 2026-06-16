@@ -39,21 +39,35 @@ export class AIMetadataEngine {
     try {
       console.log(`[AI] Querying HuggingFace Vision API (Token rotating...)`);
       
-      const response = await fetch(
-        "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/octet-stream",
-          },
-          method: "POST",
-          // @ts-ignore
-          body: imageBuffer,
-        }
-      );
+      let response;
+      let retries = 3;
+      while (retries > 0) {
+        response = await fetch(
+          "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/octet-stream",
+            },
+            method: "POST",
+            // @ts-ignore
+            body: imageBuffer,
+          }
+        );
 
-      if (!response.ok) {
-        throw new Error(`HF API Error: ${response.status} ${response.statusText}`);
+        if (response.status === 503) {
+          const json = await response.json().catch(() => ({}));
+          const waitTime = json.estimated_time ? Math.ceil(json.estimated_time) + 2 : 20;
+          console.log(`[AI] Vision model is loading. Waiting ${waitTime} seconds before retry...`);
+          await new Promise(r => setTimeout(r, waitTime * 1000));
+          retries--;
+          continue;
+        }
+        break;
+      }
+
+      if (!response || !response.ok) {
+        throw new Error(`HF Vision API Error: ${response?.status} ${response?.statusText}`);
       }
 
       const result = await response.json();

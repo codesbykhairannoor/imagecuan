@@ -39,7 +39,8 @@ export class ProcessorEngine {
       }
       
       try {
-        await uploaderEngine.upload(processedPath, path.join(target.remoteDir, fileName), target as any);
+        const remoteFilePath = target.remoteDir.endsWith('/') ? `${target.remoteDir}${fileName}` : `${target.remoteDir}/${fileName}`;
+        await uploaderEngine.upload(processedPath, remoteFilePath, target as any);
       } catch (error) {
         console.error(`[Processor] Failed to upload ${fileName} to ${target.name}:`, error);
       }
@@ -68,7 +69,12 @@ export class ProcessorEngine {
     const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
     
     for (const image of batch) {
-      await this.processImage(image);
+      try {
+        await this.processImage(image);
+      } catch (err) {
+        console.error(`[Processor] CRITICAL FAILURE processing ${image}:`, err);
+        // Continue to the next image instead of crashing the whole batch
+      }
       // Wait 2 seconds before processing the next image to prevent rate limiting
       console.log(`[Processor] Waiting 2 seconds before next image...`);
       await sleep(2000);
