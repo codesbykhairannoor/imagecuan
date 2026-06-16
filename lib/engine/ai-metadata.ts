@@ -45,7 +45,7 @@ export class AIMetadataEngine {
       while (retries > 0) {
         try {
           response = await axios.post(
-            "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large",
+            "https://router.huggingface.co/hf-inference/models/Salesforce/blip-image-captioning-large",
             imageBuffer,
             {
               headers: {
