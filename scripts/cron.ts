@@ -2,6 +2,10 @@ import { processorEngine } from "../lib/engine/processor";
 import { imageGeneratorEngine } from "../lib/engine/image-generator";
 import { CONFIG } from "../lib/config";
 import dotenv from "dotenv";
+import dns from "node:dns";
+
+// Fix Node.js 20+ fetch ENOTFOUND issues on GitHub Actions (IPv6 resolution bug)
+dns.setDefaultResultOrder("ipv4first");
 
 // Load env locally (if running locally). In GitHub Actions, secrets will populate process.env automatically.
 dotenv.config({ path: ".env.local" });

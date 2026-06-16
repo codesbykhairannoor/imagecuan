@@ -56,13 +56,11 @@ jobs:
           git config --global user.name "Imagecuan Auto Bot"
           git config --global user.email "bot@imagecuan.local"
           
-          # Delete all files that were successfully moved to storage/processed from tracking
-          # Actually, the processor `fs.move` deletes them from `storage/raw` on disk.
           # We just need to commit the deletions.
-          git add -u storage/raw/
+          git add -u || true
           
           # Also commit the history database
-          git add public/history.json
+          git add public/history.json || true
           
           # If there are changes (files deleted), commit and push
           if git diff --cached --quiet; then
