@@ -33,8 +33,8 @@ export class UploaderEngine {
       await client.access({
         host: config.host,
         port: config.port || 21,
-        user: config.username,
-        password: config.password,
+        user: config.username?.trim(),
+        password: config.password?.trim(),
         secure: false
       });
       console.log(`[UploaderEngine] Uploading ${path.basename(localPath)} -> ${config.name}`);
@@ -72,7 +72,11 @@ export class UploaderEngine {
         });
       }).on("error", (err) => {
         reject(err);
-      }).connect(config);
+      }).connect({
+        ...config,
+        username: config.username?.trim(),
+        password: config.password?.trim()
+      });
     });
   }
 }
