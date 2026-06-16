@@ -1,6 +1,7 @@
 import fs from "fs-extra";
 import path from "path";
 import { CONFIG } from "../config";
+import axios from "axios";
 
 const SUBJECTS = [
   "rocket", "golden coin", "laptop", "lightbulb", "puzzle piece", "shield", 
@@ -54,39 +55,45 @@ export class ImageGeneratorEngine {
     console.log(`[Generator] Generating image for prompt: "${prompt}"`);
 
     try {
-      let response;
+      let response: any;
       let retries = 3;
       while (retries > 0) {
-        response = await fetch(
-          "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-            method: "POST",
-            body: JSON.stringify({ inputs: prompt }),
-          }
-        );
+        try {
+          response = await axios.post(
+            "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0",
+            { inputs: prompt },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              responseType: "arraybuffer",
+              validateStatus: () => true // Resolve all statuses to handle 503 manually
+            }
+          );
 
-        if (response.status === 503) {
-          const json = await response.json().catch(() => ({}));
-          const waitTime = json.estimated_time ? Math.ceil(json.estimated_time) + 2 : 20;
-          console.log(`[Generator] Model is loading. Waiting ${waitTime} seconds before retry...`);
-          await new Promise(r => setTimeout(r, waitTime * 1000));
+          if (response.status === 503) {
+            const json = JSON.parse(response.data.toString() || "{}");
+            const waitTime = json.estimated_time ? Math.ceil(json.estimated_time) + 2 : 20;
+            console.log(`[Generator] Model is loading. Waiting ${waitTime} seconds before retry...`);
+            await new Promise(r => setTimeout(r, waitTime * 1000));
+            retries--;
+            continue;
+          }
+          break;
+        } catch (err) {
+          console.error(`[Generator] Network Error:`, err);
           retries--;
-          continue;
+          await new Promise(r => setTimeout(r, 5000));
         }
-        break;
       }
 
-      if (!response || !response.ok) {
+      if (!response || response.status !== 200) {
         throw new Error(`HF Generation Error: ${response?.status} ${response?.statusText}`);
       }
 
-      // The response is an image blob
-      const arrayBuffer = await response.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
+      // The response data is already an arraybuffer because of responseType: "arraybuffer"
+      const buffer = Buffer.from(response.data);
 
       // Save to raw folder
       const timestamp = Date.now();

@@ -4,6 +4,7 @@
  */
 
 import { CONFIG } from "../config";
+import axios from "axios";
 
 export class AIMetadataEngine {
   private tokens: string[] = [];
@@ -39,38 +40,42 @@ export class AIMetadataEngine {
     try {
       console.log(`[AI] Querying HuggingFace Vision API (Token rotating...)`);
       
-      let response;
+      let response: any;
       let retries = 3;
       while (retries > 0) {
-        response = await fetch(
-          "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/octet-stream",
-            },
-            method: "POST",
-            // @ts-ignore
-            body: imageBuffer,
-          }
-        );
+        try {
+          response = await axios.post(
+            "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large",
+            imageBuffer,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/octet-stream",
+              },
+              validateStatus: () => true // Resolve all statuses to handle 503 manually
+            }
+          );
 
-        if (response.status === 503) {
-          const json = await response.json().catch(() => ({}));
-          const waitTime = json.estimated_time ? Math.ceil(json.estimated_time) + 2 : 20;
-          console.log(`[AI] Vision model is loading. Waiting ${waitTime} seconds before retry...`);
-          await new Promise(r => setTimeout(r, waitTime * 1000));
+          if (response.status === 503) {
+            const waitTime = response.data.estimated_time ? Math.ceil(response.data.estimated_time) + 2 : 20;
+            console.log(`[AI] Vision model is loading. Waiting ${waitTime} seconds before retry...`);
+            await new Promise(r => setTimeout(r, waitTime * 1000));
+            retries--;
+            continue;
+          }
+          break;
+        } catch (err) {
+          console.error(`[AI] Network Error:`, err);
           retries--;
-          continue;
+          await new Promise(r => setTimeout(r, 5000));
         }
-        break;
       }
 
-      if (!response || !response.ok) {
+      if (!response || response.status !== 200) {
         throw new Error(`HF Vision API Error: ${response?.status} ${response?.statusText}`);
       }
 
-      const result = await response.json();
+      const result = response.data;
       
       if (Array.isArray(result) && result.length > 0 && result[0].generated_text) {
         const description = result[0].generated_text;
