@@ -57,10 +57,19 @@ export class ImageGeneratorEngine {
     try {
       let response: any;
       let retries = 3;
+      
+      const models = [
+        "black-forest-labs/FLUX.1-schnell",
+        "stabilityai/stable-diffusion-3.5-large",
+        "runwayml/stable-diffusion-v1-5"
+      ];
+      
+      let currentModel = models[0];
+
       while (retries > 0) {
         try {
           response = await axios.post(
-            "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0",
+            `https://router.huggingface.co/hf-inference/models/${currentModel}`,
             { inputs: prompt },
             {
               headers: {
@@ -79,6 +88,15 @@ export class ImageGeneratorEngine {
             await new Promise(r => setTimeout(r, waitTime * 1000));
             retries--;
             continue;
+          }
+          if (response.status === 410 || response.status === 404 || response.status === 402) {
+            // Model is no longer available or out of free quota. Try next model!
+            const nextModel = models[models.indexOf(currentModel) + 1];
+            if (nextModel) {
+              console.log(`[Generator] Model ${currentModel} failed (${response.status}). Switching to ${nextModel}...`);
+              currentModel = nextModel;
+              continue; // don't decrement retries for model fallback
+            }
           }
           break;
         } catch (err) {
