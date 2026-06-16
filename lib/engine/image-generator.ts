@@ -21,27 +21,34 @@ const COLORS = ["vibrant", "pastel", "neon", "monochrome", "golden", "silver", "
 export class ImageGeneratorEngine {
   private tokenIndex: number = 0;
 
-  private getNextToken(): string | null {
-    const potentialTokens = [
+  private potentialTokens: string[] = [];
+
+  constructor() {
+    this.potentialTokens = [
       process.env.HF_TOKEN_2,
       process.env.HF_TOKEN_3,
       process.env.HF_TOKEN_4,
       process.env.HF_TOKEN
-    ];
-    
-    const tokens = potentialTokens.filter(t => t && t.trim() !== "") as string[];
-    
-    if (tokens.length === 0) return null;
-    const token = tokens[this.tokenIndex % tokens.length];
+    ].filter(t => t && t.trim() !== "") as string[];
+  }
+
+  private getNextToken(): string | null {
+    if (this.potentialTokens.length === 0) return null;
+    const token = this.potentialTokens[this.tokenIndex % this.potentialTokens.length];
     this.tokenIndex++;
     return token;
+  }
+
+  private markTokenAsExhausted(token: string) {
+    console.warn(`[Generator] Token exhausted (402). Removing from rotation.`);
+    this.potentialTokens = this.potentialTokens.filter(t => t !== token);
   }
 
   /**
    * Generates a 3D Canva-style element image using HuggingFace Inference API
    */
   async generateImage(seed?: number): Promise<string | null> {
-    const token = this.getNextToken();
+    let token = this.getNextToken();
     if (!token) {
       console.warn("[Generator] No HF tokens available for image generation.");
       return null;
@@ -92,7 +99,18 @@ export class ImageGeneratorEngine {
             continue;
           }
           if (response.status === 410 || response.status === 404 || response.status === 402) {
-            // Model is no longer available or out of free quota. Try next model!
+            if (response.status === 402) {
+              // 402 means the TOKEN is exhausted, not the model.
+              this.markTokenAsExhausted(token);
+              // Get a fresh token and retry the exact same model immediately!
+              const freshToken = this.getNextToken();
+              if (freshToken) {
+                token = freshToken;
+                continue; // don't decrement retries for token fallback
+              }
+            }
+
+            // Model is no longer available. Try next model!
             const nextModel = models[models.indexOf(currentModel) + 1];
             if (nextModel) {
               console.log(`[Generator] Model ${currentModel} failed (${response.status}). Switching to ${nextModel}...`);
@@ -102,7 +120,7 @@ export class ImageGeneratorEngine {
           }
           break;
         } catch (err) {
-          console.error(`[Generator] Network Error:`, err);
+          console.error(`[Generator] Network Error:`, err?.message || err);
           retries--;
           await new Promise(r => setTimeout(r, 5000));
         }
