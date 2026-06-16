@@ -41,6 +41,13 @@ export class MetadataEngine {
   async generateMetadata(imageBuffer: Buffer, fileName: string): Promise<ImageMetadata> {
     return await aiMetadataEngine.generateMetadata(imageBuffer, fileName);
   }
+
+  /**
+   * Gracefully close the ExifTool background daemon to prevent orphan processes.
+   */
+  async close(): Promise<void> {
+    await exiftool.end();
+  }
 }
 
 export const metadataEngine = new MetadataEngine();

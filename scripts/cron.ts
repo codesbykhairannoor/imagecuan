@@ -1,5 +1,6 @@
 import { processorEngine } from "../lib/engine/processor";
 import { imageGeneratorEngine } from "../lib/engine/image-generator";
+import { metadataEngine } from "../lib/engine/metadata";
 import { CONFIG } from "../lib/config";
 import dotenv from "dotenv";
 import dns from "node:dns";
@@ -79,7 +80,11 @@ async function runCron() {
     console.log("=== Cron Job Finished Successfully ===");
   } catch (err) {
     console.error("Cron Job Failed:", err);
-    process.exit(1);
+    process.exitCode = 1;
+  } finally {
+    console.log("Shutting down background services...");
+    await metadataEngine.close();
+    process.exit();
   }
 }
 
