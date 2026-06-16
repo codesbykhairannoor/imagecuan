@@ -51,7 +51,9 @@ export class AIMetadataEngine {
               headers: {
                 Authorization: `Bearer ${token}`,
                 "Content-Type": "application/octet-stream",
+                Accept: "application/json",
               },
+              timeout: 60000,
               validateStatus: () => true // Resolve all statuses to handle 503 manually
             }
           );

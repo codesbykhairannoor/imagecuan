@@ -2,6 +2,7 @@ import fs from "fs-extra";
 import path from "path";
 import { CONFIG } from "../config";
 import axios from "axios";
+import sharp from "sharp";
 
 const SUBJECTS = [
   "rocket", "golden coin", "laptop", "lightbulb", "puzzle piece", "shield", 
@@ -74,6 +75,7 @@ export class ImageGeneratorEngine {
             {
               headers: {
                 Authorization: `Bearer ${token}`,
+                Accept: "image/png",
                 "Content-Type": "application/json",
               },
               responseType: "arraybuffer",
@@ -112,6 +114,11 @@ export class ImageGeneratorEngine {
 
       // The response data is already an arraybuffer because of responseType: "arraybuffer"
       const buffer = Buffer.from(response.data);
+      
+      // Convert the buffer to a valid JPEG using sharp (FLUX.1 often returns PNG/WEBP)
+      const jpegBuffer = await sharp(buffer)
+        .jpeg({ quality: 100 })
+        .toBuffer();
 
       // Save to raw folder
       const timestamp = Date.now();
@@ -119,7 +126,7 @@ export class ImageGeneratorEngine {
       const fileName = `generated_${sanitizedSubject}_${timestamp}.jpg`;
       const filePath = path.join(CONFIG.paths.raw, fileName);
 
-      await fs.writeFile(filePath, buffer);
+      await fs.writeFile(filePath, jpegBuffer);
       console.log(`[Generator] Successfully saved new image: ${fileName}`);
       
       return fileName;
