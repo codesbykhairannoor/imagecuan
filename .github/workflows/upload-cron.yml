@@ -49,6 +49,8 @@ jobs:
           RF123_PASSWORD: ${{ secrets.RF123_PASSWORD }}
           FREEPIK_USERNAME: ${{ secrets.FREEPIK_USERNAME }}
           FREEPIK_PASSWORD: ${{ secrets.FREEPIK_PASSWORD }}
+          ALIBABA_API_KEY: ${{ secrets.ALIBABA_API_KEY }}
+          ALIBABA_API_ENDPOINT: ${{ secrets.ALIBABA_API_ENDPOINT }}
         run: npx tsx scripts/cron.ts
 
       - name: Clean up processed files and commit changes

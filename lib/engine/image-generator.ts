@@ -58,9 +58,27 @@ export class ImageGeneratorEngine {
 
     let buffer: Buffer | null = null;
 
-    // --- PRIORITY 1: ALIBABA API (Custom OpenAI Compatible Endpoint) ---
-    if (process.env.ALIBABA_API_KEY && process.env.ALIBABA_API_ENDPOINT) {
-      console.log(`[Generator] Trying Alibaba API (Priority 1)...`);
+    // --- PRIORITY 1: POLLINATIONS.AI (Free global fallback) ---
+    console.log(`[Generator] Trying Pollinations API (Priority 1)...`);
+    try {
+      const encodedPrompt = encodeURIComponent(prompt);
+      const pollResponse = await axios.get(
+        `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true`,
+        { responseType: "arraybuffer", timeout: 60000, validateStatus: () => true }
+      );
+      if (pollResponse.status === 200) {
+        buffer = Buffer.from(pollResponse.data);
+        console.log(`[Generator] Pollinations API succeeded.`);
+      } else {
+        console.warn(`[Generator] Pollinations failed: ${pollResponse.status}`);
+      }
+    } catch (err: any) {
+      console.warn(`[Generator] Pollinations API Error: ${err.message}`);
+    }
+
+    // --- PRIORITY 2: ALIBABA API (Custom OpenAI Compatible Endpoint) ---
+    if (!buffer && process.env.ALIBABA_API_KEY && process.env.ALIBABA_API_ENDPOINT) {
+      console.log(`[Generator] Trying Alibaba API (Priority 2)...`);
       try {
         const alibabaResponse = await axios.post(
           `${process.env.ALIBABA_API_ENDPOINT}/images/generations`,
@@ -93,26 +111,6 @@ export class ImageGeneratorEngine {
         }
       } catch (err: any) {
         console.warn(`[Generator] Alibaba API Error: ${err.message}`);
-      }
-    }
-
-    // --- PRIORITY 2: POLLINATIONS.AI (Free global fallback) ---
-    if (!buffer) {
-      console.log(`[Generator] Trying Pollinations API (Priority 2)...`);
-      try {
-        const encodedPrompt = encodeURIComponent(prompt);
-        const pollResponse = await axios.get(
-          `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true`,
-          { responseType: "arraybuffer", timeout: 60000, validateStatus: () => true }
-        );
-        if (pollResponse.status === 200) {
-          buffer = Buffer.from(pollResponse.data);
-          console.log(`[Generator] Pollinations API succeeded.`);
-        } else {
-          console.warn(`[Generator] Pollinations failed: ${pollResponse.status}`);
-        }
-      } catch (err: any) {
-        console.warn(`[Generator] Pollinations API Error: ${err.message}`);
       }
     }
 

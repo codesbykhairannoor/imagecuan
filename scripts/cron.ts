@@ -46,9 +46,9 @@ async function runCron() {
     fsExt.ensureDirSync(CONFIG.paths.raw);
     fsExt.ensureDirSync(CONFIG.paths.processed);
 
-    // 1. Auto-Generate 5 new images
+    // 1. Auto-Generate 10 new images
     console.log("--- PHASE 1: GENERATION ---");
-    const generatedFiles = await imageGeneratorEngine.generateBatch(5);
+    const generatedFiles = await imageGeneratorEngine.generateBatch(10);
 
     // 2. Process and Upload
     console.log("--- PHASE 2: PROCESSING & UPLOAD ---");
