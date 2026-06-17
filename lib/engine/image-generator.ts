@@ -50,8 +50,7 @@ export class ImageGeneratorEngine {
   async generateImage(seed?: number): Promise<string | null> {
     let token = this.getNextToken();
     if (!token) {
-      console.warn("[Generator] No HF tokens available for image generation.");
-      return null;
+      console.warn("[Generator] No HF tokens available. Falling back to free Pollinations API...");
     }
 
     // Randomize subject to prevent duplicates
@@ -64,84 +63,107 @@ export class ImageGeneratorEngine {
 
     try {
       let response: any;
-      let retries = 3;
-      
-      const models = [
-        "black-forest-labs/FLUX.1-schnell",
-        "stabilityai/stable-diffusion-3.5-large",
-        "runwayml/stable-diffusion-v1-5"
-      ];
-      
-      let currentModel = models[0];
+      if (token) {
+        let retries = 3;
+        
+        const models = [
+          "black-forest-labs/FLUX.1-schnell",
+          "stabilityai/stable-diffusion-3.5-large",
+          "runwayml/stable-diffusion-v1-5"
+        ];
+        
+        let currentModel = models[0];
 
-      while (retries > 0) {
-        try {
-          response = await axios.post(
-            `https://router.huggingface.co/hf-inference/models/${currentModel}`,
-            { inputs: prompt },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: "image/png",
-                "Content-Type": "application/json",
-              },
-              responseType: "arraybuffer",
-              validateStatus: () => true // Resolve all statuses to handle 503 manually
+        while (retries > 0) {
+          try {
+            response = await axios.post(
+              `https://router.huggingface.co/hf-inference/models/${currentModel}`,
+              { inputs: prompt },
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  Accept: "image/png",
+                  "Content-Type": "application/json",
+                },
+                responseType: "arraybuffer",
+                validateStatus: () => true // Resolve all statuses to handle 503 manually
+              }
+            );
+
+            if (response.status === 503) {
+              const json = JSON.parse(response.data.toString() || "{}");
+              const waitTime = json.estimated_time ? Math.ceil(json.estimated_time) + 2 : 20;
+              console.log(`[Generator] Model is loading. Waiting ${waitTime} seconds before retry...`);
+              await new Promise(r => setTimeout(r, waitTime * 1000));
+              retries--;
+              continue;
             }
-          );
+            if (response.status === 410 || response.status === 404 || response.status === 402) {
+              if (response.status === 402) {
+                // 402 means the TOKEN is exhausted, not the model.
+                this.markTokenAsExhausted(token);
+                // Get a fresh token and retry the exact same model immediately!
+                const freshToken = this.getNextToken();
+                if (freshToken) {
+                  token = freshToken;
+                  continue; // don't decrement retries for token fallback
+                } else {
+                  console.warn("[Generator] All HF tokens exhausted! Switching to free Pollinations API...");
+                  break; // Break HF loop, fallthrough to Pollinations
+                }
+              }
 
-          if (response.status === 503) {
-            const json = JSON.parse(response.data.toString() || "{}");
-            const waitTime = json.estimated_time ? Math.ceil(json.estimated_time) + 2 : 20;
-            console.log(`[Generator] Model is loading. Waiting ${waitTime} seconds before retry...`);
-            await new Promise(r => setTimeout(r, waitTime * 1000));
-            retries--;
-            continue;
-          }
-          if (response.status === 410 || response.status === 404 || response.status === 402) {
-            if (response.status === 402) {
-              // 402 means the TOKEN is exhausted, not the model.
-              this.markTokenAsExhausted(token);
-              // Get a fresh token and retry the exact same model immediately!
-              const freshToken = this.getNextToken();
-              if (freshToken) {
-                token = freshToken;
-                continue; // don't decrement retries for token fallback
+              // Model is no longer available. Try next model!
+              const nextModel = models[models.indexOf(currentModel) + 1];
+              if (nextModel) {
+                console.log(`[Generator] Model ${currentModel} failed (${response.status}). Switching to ${nextModel}...`);
+                currentModel = nextModel;
+                continue; // don't decrement retries for model fallback
               }
             }
-
-            // Model is no longer available. Try next model!
-            const nextModel = models[models.indexOf(currentModel) + 1];
-            if (nextModel) {
-              console.log(`[Generator] Model ${currentModel} failed (${response.status}). Switching to ${nextModel}...`);
-              currentModel = nextModel;
-              continue; // don't decrement retries for model fallback
-            }
+            break;
+          } catch (err: any) {
+            console.error(`[Generator] Network Error:`, err?.message || err);
+            retries--;
+            await new Promise(r => setTimeout(r, 5000));
           }
-          break;
-        } catch (err) {
-          console.error(`[Generator] Network Error:`, err?.message || err);
-          retries--;
-          await new Promise(r => setTimeout(r, 5000));
         }
       }
 
+      // If HF failed entirely or tokens were exhausted, fallback to Pollinations.ai
       if (!response || response.status !== 200) {
-        throw new Error(`HF Generation Error: ${response?.status} ${response?.statusText}`);
+        console.log(`[Generator] Using Pollinations API fallback...`);
+        const encodedPrompt = encodeURIComponent(prompt);
+        response = await axios.get(
+          `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true`,
+          {
+            responseType: "arraybuffer",
+            timeout: 60000
+          }
+        );
+      }
+
+      if (!response || response.status !== 200) {
+        throw new Error(`Generation API Error: ${response?.status} ${response?.statusText}`);
       }
 
       // The response data is already an arraybuffer because of responseType: "arraybuffer"
       const buffer = Buffer.from(response.data);
       
-      // Convert the buffer to a valid JPEG using sharp (FLUX.1 often returns PNG/WEBP)
+      // Convert to JPEG and upscale to 2048x2048 (4.1 Megapixels) to pass stock agency >3MP minimum limit!
       const jpegBuffer = await sharp(buffer)
+        .resize(2048, 2048, {
+          kernel: sharp.kernel.lanczos3,
+          fit: 'contain',
+          background: { r: 255, g: 255, b: 255 }
+        })
         .jpeg({ quality: 100 })
         .toBuffer();
 
-      // Save to raw folder
-      const timestamp = Date.now();
-      const sanitizedSubject = randomSubject.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-      const fileName = `generated_${sanitizedSubject}_${timestamp}.jpg`;
+      // Beautiful SEO-friendly filename instead of ugly timestamps
+      const randomId = Math.floor(Math.random() * 100000);
+      const sanitizedSubject = randomSubject.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+      const fileName = `minimalist-flat-vector-${randomColor}-${sanitizedSubject}-${randomId}.jpg`;
       const filePath = path.join(CONFIG.paths.raw, fileName);
 
       await fs.writeFile(filePath, jpegBuffer);
