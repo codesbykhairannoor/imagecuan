@@ -41,6 +41,11 @@ for (const target of CONFIG.targets) {
 async function runCron() {
   console.log("=== Starting Imagecuan Cron Job ===");
   try {
+    // 0. Ensure storage directories exist
+    const fsExt = require("fs-extra");
+    fsExt.ensureDirSync(CONFIG.paths.raw);
+    fsExt.ensureDirSync(CONFIG.paths.processed);
+
     // 1. Auto-Generate 5 new images
     console.log("--- PHASE 1: GENERATION ---");
     const generatedFiles = await imageGeneratorEngine.generateBatch(5);
