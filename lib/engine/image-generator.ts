@@ -194,14 +194,15 @@ export class ImageGeneratorEngine {
       console.error("[Generator] ALL Generation APIs failed. Cannot create image.");
       return null;
     }
-      // Convert to JPEG and upscale to 2048x2048 (4.1 Megapixels) to pass stock agency >3MP minimum limit!
+      // Convert to JPEG and upscale to 3000x3000 (9 Megapixels) to exceed ALL stock agency minimums!
+      // 123RF requires min 6MP, Dreamstime/Pond5 require min 3MP. 9MP clears all of them easily.
       const jpegBuffer = await sharp(buffer)
-        .resize(2048, 2048, {
+        .resize(3000, 3000, {
           kernel: sharp.kernel.lanczos3,
           fit: 'contain',
           background: { r: 255, g: 255, b: 255 }
         })
-        .jpeg({ quality: 100 })
+        .jpeg({ quality: 95 })
         .toBuffer();
 
       // Beautiful SEO-friendly filename instead of ugly timestamps
