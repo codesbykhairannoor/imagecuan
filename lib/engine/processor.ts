@@ -61,7 +61,7 @@ export class ProcessorEngine {
       return;
     }
     
-    const batchSize = 5;
+    const batchSize = images.length; // Process ALL generated images, not just 5
     const batch = images.slice(0, batchSize);
     console.log(`[Processor] Processing batch of ${batch.length} images (out of ${images.length} total)`);
     
