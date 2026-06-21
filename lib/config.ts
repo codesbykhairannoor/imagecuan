@@ -59,7 +59,7 @@ export const CONFIG = {
   // AI Configuration
   ai: {
     geminiApiKey: process.env.GEMINI_API_KEY || "",
-    dummyMode: true, // Set to true to test without real API/FTP
+    dummyMode: false, // Set to true to test without real API/FTP
   },
   
   // Storage Paths
