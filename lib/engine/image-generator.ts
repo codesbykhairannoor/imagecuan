@@ -52,7 +52,7 @@ export class ImageGeneratorEngine {
     const randomSubject = SUBJECTS[Math.floor(Math.random() * SUBJECTS.length)];
     const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
     
-    const prompt = `A clean, minimalist 2D flat vector illustration of a ${randomColor} ${randomSubject}, simple solid colors, corporate dribbble style, isolated on a pure white background, no gradients, absolutely no glowing effects, no bloom, no lighting effects, no 3d render, clean crisp edges`;
+    const prompt = `A single, perfectly drawn, clean minimalist 2D flat vector illustration of exactly one ${randomColor} ${randomSubject}. Anatomically correct, flawless geometry, symmetrical, simple solid colors, corporate dribbble style, isolated on a pure white background. NO double objects, NO extra fingers, NO bad anatomy, NO mutated shapes, NO deformed objects, no gradients, absolutely no glowing effects, no 3d render, clean crisp edges.`;
 
     console.log(`[Generator] Generating image for prompt: "${prompt}"`);
 
