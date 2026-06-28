@@ -52,7 +52,9 @@ export class ImageGeneratorEngine {
     const randomSubject = SUBJECTS[Math.floor(Math.random() * SUBJECTS.length)];
     const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
     
-    const prompt = `A single, perfectly drawn, clean minimalist 2D flat vector illustration of exactly one ${randomColor} ${randomSubject}. Anatomically correct, flawless geometry, symmetrical, simple solid colors, corporate dribbble style, isolated on a pure white background. NO double objects, NO extra fingers, NO bad anatomy, NO mutated shapes, NO deformed objects, no gradients, absolutely no glowing effects, no 3d render, clean crisp edges.`;
+    // Create a random UUID to force prompt uniqueness
+    const runId = Math.random().toString(36).substring(2, 8);
+    const prompt = `A single, perfectly drawn, clean minimalist 2D flat vector illustration of exactly one ${randomColor} ${randomSubject}. Anatomically correct, flawless geometry, symmetrical, simple solid colors, corporate dribbble style, isolated on a pure white background. NO double objects, NO extra fingers, NO bad anatomy, NO mutated shapes, NO deformed objects, no gradients, absolutely no glowing effects, no 3d render, clean crisp edges. Concept ID: ${runId}`;
 
     console.log(`[Generator] Generating image for prompt: "${prompt}"`);
 
@@ -62,8 +64,9 @@ export class ImageGeneratorEngine {
     console.log(`[Generator] Trying Pollinations API (Priority 1)...`);
     try {
       const encodedPrompt = encodeURIComponent(prompt);
+      const randomSeed = seed || Math.floor(Math.random() * 1000000000);
       const pollResponse = await axios.get(
-        `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true`,
+        `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&nologo=true&seed=${randomSeed}`,
         { responseType: "arraybuffer", timeout: 60000, validateStatus: () => true }
       );
       if (pollResponse.status === 200) {
