@@ -2,8 +2,8 @@ name: Imagecuan Drip-feed Uploader
 
 on:
   schedule:
-    # Run 3 times a day at 02:00, 10:00, and 18:00 UTC (around 09:00, 17:00, 01:00 WIB)
-    - cron: '0 2,10,18 * * *'
+    # Run 6 times a day (every 4 hours) to drip-feed 8 images per run (Total: 48 images/day)
+    - cron: '0 */4 * * *'
   # Allow manual trigger from the GitHub Actions tab
   workflow_dispatch:
 
