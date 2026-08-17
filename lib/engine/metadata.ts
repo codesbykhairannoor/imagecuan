@@ -22,11 +22,12 @@ export class MetadataEngine {
     
     try {
       await exiftool.write(absolutePath, {
-        Title: metadata.title,
-        Description: metadata.description,
-        Keywords: metadata.keywords,
-        ObjectName: metadata.title,
-        "Caption-Abstract": metadata.description,
+        "IPTC:ObjectName": metadata.title,
+        "XMP:Title": metadata.title,
+        "IPTC:Caption-Abstract": metadata.description,
+        "XMP:Description": metadata.description,
+        "IPTC:Keywords": metadata.keywords,
+        "XMP:Subject": metadata.keywords,
       });
       console.log(`[MetadataEngine] Success: ${path.basename(filePath)}`);
     } catch (error) {

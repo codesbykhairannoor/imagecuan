@@ -7,6 +7,15 @@ export const CONFIG = {
   // Add your target SFTP servers here
   targets: [
     {
+      id: "vecteezy",
+      name: "Vecteezy",
+      host: "ftp.vecteezy.com",
+      port: 22,
+      username: process.env.VECTEEZY_USERNAME || "",
+      password: process.env.VECTEEZY_PASSWORD || "",
+      remoteDir: "/",
+    },
+    {
       id: "adobe-stock",
       name: "Adobe Stock",
       host: "sftp.stock.adobe.com",
@@ -15,6 +24,8 @@ export const CONFIG = {
       password: process.env.ADOBE_PASSWORD || "",
       remoteDir: "/",
     },
+    /* 
+    // DISABLED: Shutterstock explicitly bans AI content from external tools
     {
       id: "shutterstock",
       name: "Shutterstock",
@@ -24,6 +35,7 @@ export const CONFIG = {
       password: process.env.SHUTTERSTOCK_PASSWORD || "",
       remoteDir: "/",
     },
+    */
     {
       id: "dreamstime",
       name: "Dreamstime",
@@ -34,6 +46,8 @@ export const CONFIG = {
       password: process.env.DREAMSTIME_PASSWORD || "",
       remoteDir: "/",
     },
+    /*
+    // DISABLED: Pond5 explicitly bans AI content from external tools
     {
       id: "pond5",
       name: "Pond5",
@@ -44,6 +58,7 @@ export const CONFIG = {
       password: process.env.POND5_PASSWORD || "",
       remoteDir: "/",
     },
+    */
     {
       id: "123rf",
       name: "123RF",
@@ -52,6 +67,16 @@ export const CONFIG = {
       protocol: "ftp",
       username: process.env.RF123_USERNAME || "",
       password: process.env.RF123_PASSWORD || "",
+      remoteDir: "/",
+    },
+    {
+      id: "freepik",
+      name: "Freepik",
+      host: "contributor-ftp.magnific.com",
+      port: 60022,
+      protocol: "sftp",
+      username: process.env.FREEPIK_USERNAME || "",
+      password: process.env.FREEPIK_PASSWORD || "",
       remoteDir: "/",
     }
   ],
