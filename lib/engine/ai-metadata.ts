@@ -24,13 +24,21 @@ export class AIMetadataEngine {
    * Generate metadata using Google Gemini API with deep SEO research.
    */
   async generateMetadata(imageBuffer: Buffer, fileName: string) {
-    const geminiKey = CONFIG.ai.geminiApiKey;
+    // Collect all available Gemini keys from environment variables
+    const geminiKeys: string[] = [];
+    if (CONFIG.ai.geminiApiKey) geminiKeys.push(...CONFIG.ai.geminiApiKey.split(",").map(k => k.trim()));
+    if (process.env.GEMINI_API_KEY_1) geminiKeys.push(process.env.GEMINI_API_KEY_1.trim());
+    if (process.env.GEMINI_API_KEY_2) geminiKeys.push(process.env.GEMINI_API_KEY_2.trim());
+    if (process.env.GEMINI_API_KEY_3) geminiKeys.push(process.env.GEMINI_API_KEY_3.trim());
 
-    if (geminiKey && !CONFIG.ai.dummyMode) {
+    // Deduplicate and remove empty keys
+    const validKeys = [...new Set(geminiKeys.filter(k => k.length > 10))];
+
+    if (validKeys.length > 0 && !CONFIG.ai.dummyMode) {
       try {
-        return await this.generateWithGemini(imageBuffer, fileName, geminiKey);
+        return await this.generateWithGemini(imageBuffer, fileName, validKeys);
       } catch (err: any) {
-        console.warn(`[AI] Gemini Error: ${err.message}. Falling back to smart filename-based metadata.`);
+        console.warn(`[AI] All Gemini keys failed: ${err.message}. Falling back to smart filename-based metadata.`);
       }
     }
 
@@ -38,7 +46,7 @@ export class AIMetadataEngine {
     return this.getSmartFallbackMetadata(fileName);
   }
 
-  private async generateWithGemini(imageBuffer: Buffer, fileName: string, apiKey: string) {
+  private async generateWithGemini(imageBuffer: Buffer, fileName: string, apiKeys: string[]) {
     const ctx = this.parseFilenameContext(fileName);
     const base64Image = imageBuffer.toString("base64");
 
@@ -70,33 +78,39 @@ Respond with ONLY the JSON object, no markdown, no extra text.`;
     ];
 
     let rawText = "";
-    for (const model of GEMINI_MODELS) {
-      try {
-        const response = await axios.post(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-          {
-            contents: [{
-              parts: [
-                { inlineData: { mimeType: "image/jpeg", data: base64Image } },
-                { text: prompt }
-              ]
-            }],
-            generationConfig: { temperature: 0.4, maxOutputTokens: 1024 }
-          },
-          { timeout: 30000 }
-        );
-        rawText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        if (rawText) {
-          console.log(`[AI] Gemini (${model}) returned metadata.`);
-          break;
-        }
-      } catch (err: any) {
-        const status = err.response?.data?.error?.code;
-        if (status === 429) {
-          console.warn(`[AI] ${model} quota exceeded, trying next model...`);
+    
+    // Outer loop: Try each API key
+    outer: for (let i = 0; i < apiKeys.length; i++) {
+      const apiKey = apiKeys[i];
+      console.log(`[AI] Testing Gemini Key ${i + 1}...`);
+      
+      // Inner loop: Try each model with the current key
+      for (const model of GEMINI_MODELS) {
+        try {
+          const response = await axios.post(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+            {
+              contents: [{
+                parts: [
+                  { inlineData: { mimeType: "image/jpeg", data: base64Image } },
+                  { text: prompt }
+                ]
+              }],
+              generationConfig: { temperature: 0.4, maxOutputTokens: 1024 }
+            },
+            { timeout: 30000 }
+          );
+          rawText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+          if (rawText) {
+            console.log(`[AI] Gemini (${model}) via Key ${i + 1} returned metadata successfully.`);
+            break outer; // Break completely out of both loops on success
+          }
+        } catch (err: any) {
+          const status = err.response?.data?.error?.code || err.response?.status;
+          console.warn(`[AI] Key ${i + 1} (${model}) failed with status ${status}.`);
+          // If 403 or 400 (bad key), or 429/503 (rate limit/overload), try next model or next key
           continue;
         }
-        throw err;
       }
     }
     
