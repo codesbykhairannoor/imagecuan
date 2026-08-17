@@ -31,7 +31,8 @@ export class ProcessorEngine {
     await fs.move(rawPath, processedPath, { overwrite: true });
     await metadataEngine.injectMetadata(processedPath, metadata);
     
-    // 4. Upload to each target
+    // 4. Upload to each target (TEMPORARILY DISABLED FOR MANUAL UPLOAD PHASE)
+    /*
     for (const target of CONFIG.targets) {
       if (!target.username || !target.password) {
         console.warn(`[Processor] Skipping ${target.name}: Credentials not set.`);
@@ -45,6 +46,7 @@ export class ProcessorEngine {
         console.error(`[Processor] Failed to upload ${fileName} to ${target.name}:`, error);
       }
     }
+    */
     
     console.log(`[Processor] Finished: ${fileName}`);
   }

@@ -70,8 +70,8 @@ jobs:
           git config --global user.name "Imagecuan Auto Bot"
           git config --global user.email "bot@imagecuan.local"
           
-          # We just need to commit the deletions.
-          git add -u || true
+          # We want to COMMIT the generated images so they sync to the user's local folder
+          git add storage/processed/*.jpg || true
           
           # Also commit the history database
           git add public/history.json || true
