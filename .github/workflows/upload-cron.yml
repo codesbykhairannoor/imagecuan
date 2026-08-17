@@ -50,6 +50,9 @@ jobs:
           FREEPIK_USERNAME: ${{ secrets.FREEPIK_USERNAME }}
           FREEPIK_PASSWORD: ${{ secrets.FREEPIK_PASSWORD }}
           TOGETHER_API_KEY: ${{ secrets.TOGETHER_API_KEY }}
+          CF_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          AGNES_API_KEY: ${{ secrets.AGNES_API_KEY }}
         run: npx tsx scripts/cron.ts
 
       - name: Clean up processed files and commit changes
