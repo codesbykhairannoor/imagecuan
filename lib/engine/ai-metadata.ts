@@ -58,8 +58,14 @@ Return a JSON object with EXACTLY this structure:
 {
   "title": "A compelling, specific, SEO-rich title (max 70 chars). Must include the main subject and photography style. Example: 'Cinematic Shot of a Digital Nomad Typing in a Sunny Cafe'",
   "description": "A detailed 2-3 sentence description (150-200 chars) that describes what is shown, the lighting, the mood, and potential commercial use cases (lifestyle, business, editorial). Include main keywords naturally.",
-  "keywords": ["array", "of", "exactly", "30", "to", "40", "highly", "relevant", "stock", "keywords"]
+  "keywords": ["array", "of", "exactly", "30", "to", "40", "highly", "relevant", "stock", "keywords"],
+  "adobe_category": 8
 }
+
+CATEGORY RULES:
+- "adobe_category" MUST be a single integer between 1 and 21 corresponding to Adobe Stock Categories:
+  1-Animals, 2-Buildings/Architecture, 3-Business, 4-Drinks, 5-Environment, 6-States of Mind, 7-Food, 8-Graphic Resources, 9-Hobbies/Leisure, 10-Industry, 11-Landscapes, 12-Lifestyle, 13-People, 14-Plants/Flowers, 15-Culture/Religion, 16-Science, 17-Social Issues, 18-Sports, 19-Technology, 20-Transport, 21-Travel.
+- If unsure, use 8 (Graphic Resources).
 
 KEYWORD RULES (VERY IMPORTANT):
 - Include: main subject synonyms, lighting (cinematic, natural, golden hour), mood, setting, camera angles (macro, wide shot, bokeh), and concepts related to the subject.
@@ -124,12 +130,13 @@ Respond with ONLY the JSON object, no markdown, no extra text.`;
     const keywords: string[] = Array.isArray(parsed.keywords) ? parsed.keywords : [];
     const title: string = String(parsed.title || "").slice(0, 100);
     const description: string = String(parsed.description || "").slice(0, 500);
+    const adobe_category: number = Number(parsed.adobe_category) || 8;
 
     if (!title || keywords.length < 5) throw new Error("Gemini returned insufficient metadata");
 
     console.log(`[AI] Gemini generated ${keywords.length} keywords for: ${title}`);
 
-    return { title, description, keywords: keywords.slice(0, 49) };
+    return { title, description, keywords: keywords.slice(0, 49), adobe_category };
   }
 
   /**
@@ -169,7 +176,7 @@ Respond with ONLY the JSON object, no markdown, no extra text.`;
       .filter((k, i, arr) => k.length > 1 && arr.indexOf(k) === i)
       .slice(0, 40);
 
-    return { title, description, keywords };
+    return { title, description, keywords, adobe_category: 8 };
   }
 }
 

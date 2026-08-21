@@ -43,6 +43,17 @@ export class ProcessorEngine {
       
       await metadataEngine.injectMetadata(agencyFilePath, agencyMetadata);
       console.log(`[Processor] Injected ${agency} metadata into ${fileName}`);
+      
+      if (agency === "adobe") {
+        const csvPath = path.join(agencyDir, "adobe_metadata.csv");
+        const titleSafe = `"${baseMetadata.title.replace(/"/g, '""')}"`;
+        const keywordsSafe = `"${baseMetadata.keywords.map(k => String(k)).join(",")}"`;
+        // Check if CSV exists, if not write header
+        if (!fs.existsSync(csvPath)) {
+          await fs.writeFile(csvPath, "Filename,Title,Keywords,Category,Releases\n");
+        }
+        await fs.appendFile(csvPath, `${fileName},${titleSafe},${keywordsSafe},${(baseMetadata as any).adobe_category || 8},\n`);
+      }
     }
     
     // Clean up original raw file
