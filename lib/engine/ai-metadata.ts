@@ -13,11 +13,11 @@ export class AIMetadataEngine {
    */
   private parseFilenameContext(fileName: string): { subject: string; styleSlug: string; style: string } {
     const base = fileName.replace(/\.[^/.]+$/, "").replace(/-\d+$/, "");
-    // Pattern: cinematic-photo-{styleSlug}-{subject...}
+    // Pattern: {styleSlug}-{subject...}
     const parts = base.split("-");
-    const styleSlug = parts[2] || "cinematic";
-    const subject = parts.slice(3).join(" ") || base;
-    return { subject, styleSlug, style: "photorealistic cinematic high quality photography" };
+    const styleSlug = parts[0] || "cinematic";
+    const subject = parts.slice(1).join(" ") || base;
+    return { subject, styleSlug, style: "highly detailed cinematic high quality imagery" };
   }
 
   /**
@@ -63,8 +63,9 @@ Return a JSON object with EXACTLY this structure:
 
 KEYWORD RULES (VERY IMPORTANT):
 - Include: main subject synonyms, lighting (cinematic, natural, golden hour), mood, setting, camera angles (macro, wide shot, bokeh), and concepts related to the subject.
-- ALWAYS include these high-traffic terms when relevant: "high resolution", "photorealistic", "cinematic", "lifestyle", "commercial photography", "authentic", "generative ai"
-- STRICTLY FORBIDDEN: Do not include ANY trademarked brands (e.g., Nike, Apple), specific camera brands (e.g., Nikon, Fujifilm, 35mm), or famous artist names (e.g., Greg Rutkowski). Microstock agencies will reject the image if these are included.
+- ALWAYS include these high-traffic terms when relevant: "high resolution", "highly detailed", "cinematic", "lifestyle", "commercial", "authentic"
+- STRICTLY FORBIDDEN TERMS: Do not use generalized terms like "vector", "video", "photo", "photography", "illustration", "image", "picture". Do not use AI terms like "ai", "ai-generated", "generative ai", "midjourney". Do not include ANY trademarked brands (e.g., Nike), specific camera brands (e.g., Nikon, 35mm), or famous artist names (e.g., Greg Rutkowski).
+- NO NEWSWORTHY EVENTS: Do not imply an actual depiction of real newsworthy events or photojournalism.
 - Include at least 2-3 industry/niche keywords
 - All keywords must be lowercase
 - Minimum 30 keywords, maximum 40 keywords
@@ -140,17 +141,16 @@ Respond with ONLY the JSON object, no markdown, no extra text.`;
     const subjectTitle = subject.replace(/\b\w/g, c => c.toUpperCase());
     const styleTitle = styleSlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
-    const title = `Cinematic Photo of ${subjectTitle} - ${styleTitle} Style`;
+    const title = `Cinematic Creation of ${subjectTitle} - ${styleTitle} Style`;
 
-    const description = `A highly detailed, photorealistic image of a ${subject} captured with beautiful ${styleTitle.toLowerCase()} aesthetics. Ideal for modern commercial use, web design, and editorial layouts. High resolution and pristine quality.`;
+    const description = `A highly detailed creation of a ${subject} captured with beautiful ${styleTitle.toLowerCase()} aesthetics. Ideal for modern commercial use, web design, and editorial layouts. High resolution and pristine quality.`;
 
     const subjectWords = subject.split(" ");
     const keywords = [
       ...subjectWords,
       subject,
       "cinematic",
-      "photography",
-      "photorealistic",
+      "highly detailed",
       "high quality",
       "commercial",
       "lifestyle",
@@ -161,7 +161,7 @@ Respond with ONLY the JSON object, no markdown, no extra text.`;
       "professional",
       "8k",
       styleSlug.replace(/-/g, ' '),
-      `${subject} photography`,
+      `${subject} imagery`,
       "background",
       "texture",
       "lighting"

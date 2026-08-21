@@ -10,45 +10,45 @@ import { uploaderEngine } from "./uploader";
 import { CONFIG } from "../config";
 
 export class ProcessorEngine {
-  /**
-   * Run the full pipeline for a single image.
-   */
   async processImage(fileName: string) {
     const rawPath = path.join(CONFIG.paths.raw, fileName);
-    const processedPath = path.join(CONFIG.paths.processed, fileName);
     
     console.log(`[Processor] Processing: ${fileName}`);
     
     // 1. Read Image
     const buffer = await fs.readFile(rawPath);
     
-    // 2. Generate AI Metadata
-    const metadata = await metadataEngine.generateMetadata(buffer, fileName);
-    console.log(`[Processor] AI generated metadata for ${fileName}`);
+    // 2. Generate Base AI Metadata (Clean, no AI keywords)
+    const baseMetadata = await metadataEngine.generateMetadata(buffer, fileName);
+    console.log(`[Processor] AI generated base metadata for ${fileName}`);
     
-    // 3. Inject Metadata into file
-    // Move to processed first so we don't modify the original in raw (and clean raw)
-    await fs.move(rawPath, processedPath, { overwrite: true });
-    await metadataEngine.injectMetadata(processedPath, metadata);
+    // 3. Define Agencies
+    const agencies = ["adobe", "vecteezy", "freepik", "123rf"];
     
-    // 4. Upload to each target (TEMPORARILY DISABLED FOR MANUAL UPLOAD PHASE)
-    /*
-    for (const target of CONFIG.targets) {
-      if (!target.username || !target.password) {
-        console.warn(`[Processor] Skipping ${target.name}: Credentials not set.`);
-        continue;
+    for (const agency of agencies) {
+      const agencyDir = path.join(CONFIG.paths.processed, agency);
+      await fs.ensureDir(agencyDir);
+      
+      const agencyFilePath = path.join(agencyDir, fileName);
+      await fs.copy(rawPath, agencyFilePath);
+      
+      // Clone metadata
+      const agencyMetadata = { ...baseMetadata, keywords: [...baseMetadata.keywords] };
+      
+      // Agency specific rules
+      if (agency === "123rf") {
+        // 123RF REQUIRES "AI-Generated" keyword
+        agencyMetadata.keywords.push("ai-generated", "ai generative");
       }
       
-      try {
-        const remoteFilePath = target.remoteDir.endsWith('/') ? `${target.remoteDir}${fileName}` : `${target.remoteDir}/${fileName}`;
-        await uploaderEngine.upload(processedPath, remoteFilePath, target as any);
-      } catch (error) {
-        console.error(`[Processor] Failed to upload ${fileName} to ${target.name}:`, error);
-      }
+      await metadataEngine.injectMetadata(agencyFilePath, agencyMetadata);
+      console.log(`[Processor] Injected ${agency} metadata into ${fileName}`);
     }
-    */
     
-    console.log(`[Processor] Finished: ${fileName}`);
+    // Clean up original raw file
+    await fs.remove(rawPath);
+    
+    console.log(`[Processor] Finished branching ${fileName} into agency folders`);
   }
 
   /**

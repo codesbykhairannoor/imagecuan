@@ -62,7 +62,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: generated-images-${{ github.run_id }}
-          path: storage/processed/*.jpg
+          path: storage/processed/
           retention-days: 30
 
       - name: Clean up processed files and commit changes
@@ -71,7 +71,7 @@ jobs:
           git config --global user.email "bot@imagecuan.local"
           
           # We want to COMMIT the generated images so they sync to the user's local folder
-          git add storage/processed/*.jpg || true
+          git add storage/processed/ || true
           
           # Also commit the history database
           git add public/history.json || true

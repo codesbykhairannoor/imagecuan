@@ -127,7 +127,7 @@ export class ImageGeneratorEngine {
 
     // Beautiful SEO-friendly filename from Prompt Matrix
     const randomId = Math.floor(Math.random() * 100000);
-    const fileName = `cinematic-photo-${generated.categorySlug}-${generated.sanitizedSubject}-${randomId}.jpg`;
+    const fileName = `${generated.categorySlug}-${generated.sanitizedSubject}-${randomId}.jpg`;
     const filePath = path.join(CONFIG.paths.raw, fileName);
 
     await fs.writeFile(filePath, jpegBuffer);
