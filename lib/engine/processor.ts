@@ -22,8 +22,8 @@ export class ProcessorEngine {
     const baseMetadata = await metadataEngine.generateMetadata(buffer, fileName);
     console.log(`[Processor] AI generated base metadata for ${fileName}`);
     
-    // 3. Define Agencies
-    const agencies = ["adobe", "vecteezy", "freepik", "123rf"];
+    // 3. Define Agencies (Add dreamstime)
+    const agencies = ["adobe", "vecteezy", "freepik", "123rf", "dreamstime"];
     
     for (const agency of agencies) {
       const agencyDir = path.join(CONFIG.paths.processed, agency);
@@ -53,6 +53,19 @@ export class ProcessorEngine {
           await fs.writeFile(csvPath, "Filename,Title,Keywords,Category,Releases\n");
         }
         await fs.appendFile(csvPath, `${fileName},${titleSafe},${keywordsSafe},${(baseMetadata as any).adobe_category || 8},\n`);
+      }
+
+      // 4. Automatic FTP Upload (if configured for this agency)
+      const target = CONFIG.targets.find(t => t.id === agency);
+      if (target && target.username && target.password) {
+        try {
+          console.log(`[Processor] Starting FTP upload to ${target.name}...`);
+          const remoteFilePath = target.remoteDir.endsWith('/') ? `${target.remoteDir}${fileName}` : `${target.remoteDir}/${fileName}`;
+          await uploaderEngine.upload(agencyFilePath, remoteFilePath, target as any);
+          console.log(`[Processor] Uploaded to ${target.name} successfully.`);
+        } catch (error) {
+          console.error(`[Processor] Failed to upload ${fileName} to ${target.name}:`, error);
+        }
       }
     }
     
