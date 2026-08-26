@@ -39,6 +39,10 @@ export class ProcessorEngine {
       if (agency === "123rf") {
         // 123RF REQUIRES "AI-Generated" keyword
         agencyMetadata.keywords.push("ai-generated", "ai generative");
+      } else if (agency === "dreamstime") {
+        // Dreamstime REQUIRES AI declaration in description and keywords
+        agencyMetadata.description = `${agencyMetadata.description} (This image is AI generated)`;
+        agencyMetadata.keywords.push("generative ai", "ai generated");
       }
       
       await metadataEngine.injectMetadata(agencyFilePath, agencyMetadata);
