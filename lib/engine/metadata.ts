@@ -21,13 +21,14 @@ export class MetadataEngine {
     const absolutePath = path.resolve(filePath);
     
     try {
-      await exiftool.write(absolutePath, {
+      await (exiftool as any).write(absolutePath, {
         "IPTC:ObjectName": metadata.title,
         "XMP:Title": metadata.title,
         "IPTC:Caption-Abstract": metadata.description,
         "XMP:Description": metadata.description,
         "IPTC:Keywords": metadata.keywords,
         "XMP:Subject": metadata.keywords,
+        "XMP:DigitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia",
       });
       console.log(`[MetadataEngine] Success: ${path.basename(filePath)}`);
     } catch (error) {

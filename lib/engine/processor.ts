@@ -40,8 +40,17 @@ export class ProcessorEngine {
         // 123RF REQUIRES "AI-Generated" keyword
         agencyMetadata.keywords.push("ai-generated", "ai generative");
       } else if (agency === "dreamstime") {
-        // Dreamstime REQUIRES AI declaration in description and keywords
-        agencyMetadata.description = `${agencyMetadata.description} (This image is AI generated)`;
+        // Dreamstime REQUIRES AI declaration. Prepended to avoid IPTC 255-char truncation.
+        let desc = agencyMetadata.description;
+        if (desc.length > 200) {
+           // Cut at 200, then find the last period to ensure a complete sentence
+           const cut = desc.substring(0, 200);
+           const lastPeriod = cut.lastIndexOf(".");
+           desc = lastPeriod > 0 ? cut.substring(0, lastPeriod + 1) : cut.trim() + ".";
+        }
+        agencyMetadata.description = `(AI-Generated) ${desc}`;
+        agencyMetadata.keywords.push("generative ai", "ai generated");
+      } else if (agency === "adobe") {
         agencyMetadata.keywords.push("generative ai", "ai generated");
       }
       
@@ -50,8 +59,8 @@ export class ProcessorEngine {
       
       if (agency === "adobe") {
         const csvPath = path.join(agencyDir, "adobe_metadata.csv");
-        const titleSafe = `"${baseMetadata.title.replace(/"/g, '""')}"`;
-        const keywordsSafe = `"${baseMetadata.keywords.map(k => String(k)).join(",")}"`;
+        const titleSafe = `"${agencyMetadata.title.replace(/"/g, '""')}"`;
+        const keywordsSafe = `"${agencyMetadata.keywords.map(k => String(k)).join(",")}"`;
         // Check if CSV exists, if not write header
         if (!fs.existsSync(csvPath)) {
           await fs.writeFile(csvPath, "Filename,Title,Keywords,Category,Releases\n");
