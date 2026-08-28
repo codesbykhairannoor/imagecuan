@@ -58,14 +58,13 @@ export class ProcessorEngine {
       console.log(`[Processor] Injected ${agency} metadata into ${fileName}`);
       
       if (agency === "adobe") {
-        const csvPath = path.join(agencyDir, "adobe_metadata.csv");
-        const titleSafe = `"${agencyMetadata.title.replace(/"/g, '""')}"`;
-        const keywordsSafe = `"${agencyMetadata.keywords.map(k => String(k)).join(",")}"`;
-        // Check if CSV exists, if not write header
-        if (!fs.existsSync(csvPath)) {
-          await fs.writeFile(csvPath, "Filename,Title,Keywords,Category,Releases\n");
-        }
-        await fs.appendFile(csvPath, `${fileName},${titleSafe},${keywordsSafe},${(baseMetadata as any).adobe_category || 8},\n`);
+        // [FIX]: We purposefully DO NOT generate adobe_metadata.csv!
+        // The CSV format does not support the "Generative AI" flag. 
+        // If we upload a CSV, Adobe Auto-Submits the file WITHOUT the AI flag, 
+        // causing it to be rejected by reviewers for "Missing Generative AI Flag".
+        // By relying purely on embedded EXIF, the files will sit in the "New" tab
+        // waiting for you to manually check the AI box and submit.
+        console.log(`[Processor] Skipping CSV generation for Adobe to prevent auto-submission without AI flag.`);
       }
 
       // 4. Automatic FTP Upload (if configured for this agency)
