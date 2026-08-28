@@ -51,9 +51,11 @@ export class ProcessorEngine {
         agencyMetadata.description = `(AI-Generated) ${desc}`;
         agencyMetadata.keywords.push("generative ai", "ai generated");
       } else if (agency === "adobe") {
-        agencyMetadata.keywords.push("generative ai", "ai generated");
-      }
-      
+        // [FIX]: Sesuai pedoman terbaru Adobe, kita TIDAK BOLEH memasukkan 
+        // keyword "generative ai" atau "ai generated". Hal ini memicu flagging otomatis
+        // atau reject dari reviewer jika terjadi glitch pada sistem centang.
+        // Biarkan array keywords bersih dari kata AI.
+      }      
       await metadataEngine.injectMetadata(agencyFilePath, agencyMetadata);
       console.log(`[Processor] Injected ${agency} metadata into ${fileName}`);
       
