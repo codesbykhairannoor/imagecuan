@@ -56,7 +56,7 @@ export class AIMetadataEngine {
 
 Return a JSON object with EXACTLY this structure:
 {
-  "title": "A compelling, specific, SEO-rich title (max 70 chars). Must include the main subject and photography style. Example: 'Cinematic Shot of a Digital Nomad Typing in a Sunny Cafe'",
+  "title": "A compelling, specific, SEO-rich title (max 70 chars). Must include the main subject and aesthetic. Example: 'A glowing digital nomad typing on a laptop in a stylized sunny cafe'",
   "description": "A detailed 2-3 sentence description (150-200 chars) that describes what is shown, the lighting, the mood, and potential commercial use cases (lifestyle, business, editorial). Include main keywords naturally.",
   "keywords": ["array", "of", "exactly", "30", "to", "40", "highly", "relevant", "stock", "keywords"],
   "adobe_category": 8
@@ -70,8 +70,8 @@ CATEGORY RULES:
 KEYWORD RULES (VERY IMPORTANT):
 - Include: main subject synonyms, lighting (cinematic, natural, golden hour), mood, setting, camera angles (macro, wide shot, bokeh), and concepts related to the subject.
 - ALWAYS include these high-traffic terms when relevant: "high resolution", "highly detailed", "cinematic", "lifestyle", "commercial", "authentic"
-- STRICTLY FORBIDDEN TERMS: Do not use generalized terms like "vector", "video", "photo", "photography", "illustration", "image", "picture". Do not use AI terms like "ai", "ai-generated", "generative ai", "midjourney". Do not include ANY trademarked brands (e.g., Nike), specific camera brands (e.g., Nikon, 35mm), or famous artist names (e.g., Greg Rutkowski).
-- NO NEWSWORTHY EVENTS: Do not imply an actual depiction of real newsworthy events or photojournalism.
+- STRICTLY FORBIDDEN TERMS: Do not use generalized terms like "vector", "video", "photo", "photography", "illustration", "image", "picture". Do not use camera terms like "shot of", "photo of", "macro shot", "captured", "lens". Do not use AI terms like "ai", "ai-generated", "generative ai", "midjourney". Do not include ANY trademarked brands (e.g., Nike) or famous artist names.
+- NO NEWSWORTHY EVENTS: Do not imply an actual depiction of real newsworthy events or photojournalism. Must be descriptive, not editorial.
 - Include at least 2-3 industry/niche keywords
 - All keywords must be lowercase
 - Minimum 30 keywords, maximum 40 keywords
@@ -148,7 +148,7 @@ Respond with ONLY the JSON object, no markdown, no extra text.`;
     const subjectTitle = subject.replace(/\b\w/g, c => c.toUpperCase());
     const styleTitle = styleSlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 
-    const title = `Cinematic Creation of ${subjectTitle} - ${styleTitle} Style`;
+    const title = `${subjectTitle} with ${styleTitle} Aesthetic Details`;
 
     const description = `A highly detailed creation of a ${subject} captured with beautiful ${styleTitle.toLowerCase()} aesthetics. Ideal for modern commercial use, web design, and editorial layouts. High resolution and pristine quality.`;
 
