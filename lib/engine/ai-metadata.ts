@@ -145,8 +145,12 @@ Respond with ONLY the JSON object, no markdown, no extra text.`;
   private getSmartFallbackMetadata(fileName: string) {
     const ctx = this.parseFilenameContext(fileName);
     const { subject, styleSlug } = ctx;
-    const subjectTitle = subject.replace(/\b\w/g, c => c.toUpperCase());
-    const styleTitle = styleSlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    let subjectTitle = subject.replace(/\b\w/g, c => c.toUpperCase());
+    let styleTitle = styleSlug.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+    // Deep clean words from fallback title
+    subjectTitle = subjectTitle.replace(/Photo/gi, "").replace(/Shot/gi, "").replace(/Camera/gi, "").replace(/\s+/g, " ").trim();
+    styleTitle = styleTitle.replace(/Photo/gi, "").replace(/Shot/gi, "").replace(/Camera/gi, "").replace(/\s+/g, " ").trim();
 
     const title = `${subjectTitle} with ${styleTitle} Aesthetic Details`;
 
