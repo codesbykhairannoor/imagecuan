@@ -116,19 +116,17 @@ export class ImageGeneratorEngine {
       return null;
     }
 
-    // Convert to JPEG and upscale to 3000x3000 (9 Megapixels)
+    // Convert to JPEG without naive upscaling to preserve crisp 1024x1024 native AI quality
     const jpegBuffer = await sharp(buffer)
-      .resize(3000, 3000, {
-        kernel: sharp.kernel.lanczos3,
-        fit: 'cover'
-      })
       .jpeg({ quality: 95 })
       .toBuffer();
 
     // Beautiful SEO-friendly filename from Prompt Matrix
     const randomId = Math.floor(Math.random() * 100000);
     const fileName = `${generated.categorySlug}-${generated.sanitizedSubject}-${randomId}.jpg`;
-    const filePath = path.join(CONFIG.paths.raw, fileName);
+    
+    // Save to needs_upscale directory so user can upscale via software before metadata processing
+    const filePath = path.join(CONFIG.paths.needsUpscale, fileName);
 
     await fs.writeFile(filePath, jpegBuffer);
     console.log(`[Generator] Successfully saved new image: ${fileName}`);

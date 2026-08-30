@@ -89,6 +89,7 @@ export const CONFIG = {
   
   // Storage Paths
   paths: {
+    needsUpscale: "./storage/needs_upscale",
     raw: "./storage/raw",
     processed: "./storage/processed",
     logs: "./storage/logs",
